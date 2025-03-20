@@ -2,14 +2,16 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'netflix-app'                           // Your Docker image name
-        DOCKER_REPO = 'srikanthk419'                           // Your Docker Hub repo
-        MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'  // Updated manifest repo
-        MANIFEST_BRANCH = 'main'                               // Branch name
-        DEPLOY_FILE = 'manifests/deploy.yml'                   // Path to the manifest file
+        DOCKER_IMAGE = 'srikanthk419/netflix'
+        DOCKER_REPO = 'srikanthk419'
+        MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'
+        MANIFEST_BRANCH = 'main'
+        DEPLOY_FILE = 'manifest/deployment.yaml'  // Correct path with manifest folder
+        WORKSPACE_DIR = '/var/lib/jenkins/workspace/netflix-git-ops'
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 script {
@@ -30,10 +32,10 @@ pipeline {
         stage('Docker Login') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'docker_cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh """
-                            echo '${DOCKER_PASSWORD}' | docker login -u '${DOCKER_USERNAME}' --password-stdin
-                        """
+                    withCredentials([usernamePassword(credentialsId: 'srikanth-docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                            echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+                        '''
                     }
                 }
             }
@@ -42,15 +44,17 @@ pipeline {
         stage('Docker Build and Push') {
             steps {
                 script {
-                    sh """
+                    sh '''
                         set -ex
-                        if [ ! -d client ]; then echo "Error: client directory not found"; exit 1; fi
-                        cd client
+                        cd ${WORKSPACE_DIR}
                         ls
-                        docker build --no-cache -t ${DOCKER_IMAGE}:${IMAGE_TAG} .
-                        docker tag ${DOCKER_IMAGE}:${IMAGE_TAG} ${DOCKER_REPO}/${DOCKER_IMAGE}:${IMAGE_TAG}
-                        docker push ${DOCKER_REPO}/${DOCKER_IMAGE}:${IMAGE_TAG}
-                    """
+
+                        # Docker build
+                        docker build --no-cache -t ${DOCKER_REPO}/netflix:${IMAGE_TAG} .
+
+                        # Push the image
+                        docker push ${DOCKER_REPO}/netflix:${IMAGE_TAG}
+                    '''
                 }
             }
         }
@@ -58,30 +62,54 @@ pipeline {
         stage('Update Kubernetes Manifest') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'git_token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-                        sh """
+                    withCredentials([usernamePassword(credentialsId: 'srikanth-git', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                        sh '''
                             set -ex
-                            
-                            # Remove existing repo if exists
-                            rm -rf manifests_repo
+                            rm -rf CD-Netflix manifest
 
-                            # Clone the Git repo containing Kubernetes manifests using credentials
-                            git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git 
-                            cd CD-Netflix/manifests_repo
+                            # Clone the GitHub repo containing Kubernetes manifests
+                            git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git
 
-                            # Update image tag in deploy.yml
-                            sed -i 's|image: ${DOCKER_REPO}/${DOCKER_IMAGE}:.*|image: ${DOCKER_REPO}/${DOCKER_IMAGE}:${IMAGE_TAG}|' ${DEPLOY_FILE}
+                            # ✅ Correct folder navigation
+                            cd CD-Netflix/manifest
+                            ls -la
+
+                            # Validate the manifest file exists
+                            if [ ! -f ${DEPLOY_FILE} ]; then
+                                echo "Error: ${DEPLOY_FILE} not found!"
+                                exit 1
+                            fi
+
+                            # Display the current image line
+                            echo "Current image line:"
+                            grep 'image:' ${DEPLOY_FILE}
+
+                            # ✅ Update the image tag with the new one
+                            sed -i "s#image: .*#image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}#" ${DEPLOY_FILE}
+
+                            # Verify the change
+                            echo "Updated image line:"
+                            grep 'image:' ${DEPLOY_FILE}
 
                             # Commit and push changes
                             git config user.name "Srikanth-c4c"
-                            git config user.email "your-email@example.com"
+                            git config user.email "srikanth@gmail.com"    # Replace with your GitHub email
                             git add ${DEPLOY_FILE}
                             git commit -m "Update image tag to ${IMAGE_TAG}"
                             git push origin ${MANIFEST_BRANCH}
-                        """
+                        '''
                     }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
         }
     }
 }
