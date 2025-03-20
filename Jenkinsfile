@@ -11,7 +11,7 @@ pipeline {
     }
 
     stages {
-        
+
         stage('Checkout Code') {
             steps {
                 script {
@@ -46,15 +46,13 @@ pipeline {
                 script {
                     sh """
                         set -ex
-
-                        # Navigate to Jenkins workspace
                         cd ${WORKSPACE_DIR}
                         ls
 
                         # Docker build
                         docker build --no-cache -t ${DOCKER_REPO}/netflix:${IMAGE_TAG} .
 
-                        # Tag and push the image
+                        # Push the image
                         docker push ${DOCKER_REPO}/netflix:${IMAGE_TAG}
                     """
                 }
@@ -67,8 +65,6 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'srikanth-git', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
                         sh """
                             set -ex
-
-                            # Remove old manifests repo if exists
                             rm -rf CD-Netflix
 
                             # Clone the GitHub repo containing Kubernetes manifests
@@ -85,37 +81,18 @@ pipeline {
 
                             # Display the current image line for debugging
                             echo "Current image line:"
+                            sh '''
                             cat ${DEPLOY_FILE} | grep "image:"
+                            '''
 
                             # Update image tag in deployment.yaml
                             sed -i "s|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|" ${DEPLOY_FILE}
 
                             # Verify the change
                             echo "Updated image line:"
+                            sh '''
                             cat ${DEPLOY_FILE} | grep "image:"
+                            '''
 
                             # Add a dummy comment to force commit
-                            echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
-
-                            # Commit and push changes
-                            git config user.name "Srikanth-c4c"
-                            git config user.email "your-email@example.com"  // Replace with your GitHub email
-                            git add ${DEPLOY_FILE}
-                            git commit -m "Update image tag to ${IMAGE_TAG}"
-                            git push origin ${MANIFEST_BRANCH}
-                        """
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Pipeline completed successfully!"
-        }
-        failure {
-            echo "❌ Pipeline failed!"
-        }
-    }
-}
+                            echo "# Updated at: $(date)" >> 
