@@ -81,18 +81,14 @@ pipeline {
 
                             # Display the current image line for debugging
                             echo "Current image line:"
-                            sh '''
                             cat ${DEPLOY_FILE} | grep "image:"
-                            '''
 
                             # Update image tag in deployment.yaml
                             sed -i "s|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|" ${DEPLOY_FILE}
 
                             # Verify the change
                             echo "Updated image line:"
-                            sh '''
                             cat ${DEPLOY_FILE} | grep "image:"
-                            '''
 
                             # Add a dummy comment to force commit
                             echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
