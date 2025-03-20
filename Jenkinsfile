@@ -6,7 +6,7 @@ pipeline {
         DOCKER_REPO = 'srikanthk419'                           // Docker Hub repo
         MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'  // Manifest repo
         MANIFEST_BRANCH = 'main'                               // Branch name
-        DEPLOY_FILE = 'deployment.yml'                         // Manifest file path
+        DEPLOY_FILE = 'deployment.yaml'                         // Manifest file path
     }
 
     stages {
