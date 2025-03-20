@@ -11,6 +11,7 @@ pipeline {
     }
 
     stages {
+        
         stage('Checkout Code') {
             steps {
                 script {
@@ -89,15 +90,16 @@ pipeline {
                             # Update image tag in deployment.yaml
                             sed -i "s|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|" ${DEPLOY_FILE}
 
-                            # Check if changes were made
-                            if git diff --exit-code; then
-                                echo "No changes made. Skipping commit."
-                                exit 0
-                            fi
+                            # Verify the change
+                            echo "Updated image line:"
+                            cat ${DEPLOY_FILE} | grep "image:"
+
+                            # Add a dummy comment to force commit
+                            echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
 
                             # Commit and push changes
                             git config user.name "Srikanth-c4c"
-                            git config user.email "your-email@example.com"  # Replace with your GitHub email
+                            git config user.email "your-email@example.com"  // Replace with your GitHub email
                             git add ${DEPLOY_FILE}
                             git commit -m "Update image tag to ${IMAGE_TAG}"
                             git push origin ${MANIFEST_BRANCH}
@@ -105,6 +107,15 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
         }
     }
 }
