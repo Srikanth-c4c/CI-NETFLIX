@@ -95,4 +95,27 @@ pipeline {
                             '''
 
                             # Add a dummy comment to force commit
-                            echo "# Updated at: $(date)" >> 
+                            echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
+
+                            # Commit and push changes
+                            git config user.name "Srikanth-c4c"
+                            git config user.email "your-email@example.com"  // Replace with your GitHub email
+                            git add ${DEPLOY_FILE}
+                            git commit -m "Update image tag to ${IMAGE_TAG}"
+                            git push origin ${MANIFEST_BRANCH}
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
+        }
+    }
+}
