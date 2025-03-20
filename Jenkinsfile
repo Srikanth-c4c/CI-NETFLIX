@@ -51,7 +51,7 @@ pipeline {
                         # Navigate to CI-NETFLIX directory
                         pwd
 			ls
-                        cd CI-NETFLIX
+                        cd /var/lib/jenkins/workspace/netflix-git-ops/
                         ls
 
                         # Docker build
