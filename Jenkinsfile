@@ -76,6 +76,8 @@ pipeline {
 
                             # Clone the GitHub repo containing Kubernetes manifests
                             git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git
+			    pwd
+         		    ls	
                             cd CD-Netflix
 
                             # Update image tag in deployment.yml
