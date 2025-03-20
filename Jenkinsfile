@@ -71,7 +71,7 @@ pipeline {
                             git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git
 
                             # ✅ Correct folder navigation
-                            cd CD-Netflix/manifest
+                            cd CD-Netflix
                             ls -la
 
                             # Validate the manifest file exists
