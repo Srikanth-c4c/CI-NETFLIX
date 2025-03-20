@@ -46,7 +46,7 @@ pipeline {
                         set -ex
 
                         # Ensure CI-NETFLIX directory exists
-                        if [ ! -d CI-NETFLIX ]; then echo "Error: CI-NETFLIX directory not found"; exit 1; fi
+                       # if [ ! -d CI-NETFLIX ]; then echo "Error: CI-NETFLIX directory not found"; exit 1; fi
 
                         # Navigate to CI-NETFLIX directory
                         cd CI-NETFLIX
