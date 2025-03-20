@@ -33,9 +33,9 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'srikanth-docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh """
-                            echo '${DOCKER_PASSWORD}' | docker login -u '${DOCKER_USERNAME}' --password-stdin
-                        """
+                        sh '''
+                            echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+                        '''
                     }
                 }
             }
@@ -44,7 +44,7 @@ pipeline {
         stage('Docker Build and Push') {
             steps {
                 script {
-                    sh """
+                    sh '''
                         set -ex
                         cd ${WORKSPACE_DIR}
                         ls
@@ -54,7 +54,7 @@ pipeline {
 
                         # Push the image
                         docker push ${DOCKER_REPO}/netflix:${IMAGE_TAG}
-                    """
+                    '''
                 }
             }
         }
@@ -63,13 +63,13 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'srikanth-git', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-                        sh """
+                        sh '''
                             set -ex
                             rm -rf CD-Netflix
 
                             # Clone the GitHub repo containing Kubernetes manifests
                             git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git
-                            
+
                             cd CD-Netflix
                             ls -la
 
@@ -79,29 +79,24 @@ pipeline {
                                 exit 1
                             fi
 
-                            # Display the current image line for debugging
+                            # Display the current image line
                             echo "Current image line:"
                             grep 'image:' ${DEPLOY_FILE}
 
-                            # ✅ Use single quotes around `sed` to prevent Groovy expansion
-                            sh '''
-                                sed -i 's#image: \\$\\{DOCKER_REPO\\}/netflix:[^ ]*#image: srikanthk419/netflix:'"${IMAGE_TAG}"'#' ${DEPLOY_FILE}
-                            '''
+                            # ✅ Use triple single quotes to prevent Groovy expansion issues
+                            sed -i "s#image: .*#image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}#" ${DEPLOY_FILE}
 
                             # Verify the change
                             echo "Updated image line:"
                             grep 'image:' ${DEPLOY_FILE}
 
-                            # Add a dummy comment to force commit
-                            echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
-
                             # Commit and push changes
                             git config user.name "Srikanth-c4c"
-                            git config user.email "srikanth@gmail.com"    // Replace with your GitHub email
+                            git config user.email "srikanth@gmail.com"    # Replace with your GitHub email
                             git add ${DEPLOY_FILE}
                             git commit -m "Update image tag to ${IMAGE_TAG}"
                             git push origin ${MANIFEST_BRANCH}
-                        """
+                        '''
                     }
                 }
             }
