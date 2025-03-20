@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'srikanthk419/netflix'                           // Docker image name
-        DOCKER_REPO = 'srikanthk419'                                    // Docker Hub repo
-        MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'  // Manifest repo
-        MANIFEST_BRANCH = 'main'                                        // Branch name
-        DEPLOY_FILE = 'deployment.yaml'                                 // Kubernetes manifest file path
-        WORKSPACE_DIR = '/var/lib/jenkins/workspace/netflix-git-ops'    // Jenkins workspace directory
+        DOCKER_IMAGE = 'srikanthk419/netflix'
+        DOCKER_REPO = 'srikanthk419'
+        MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'
+        MANIFEST_BRANCH = 'main'
+        DEPLOY_FILE = 'deployment.yaml'
+        WORKSPACE_DIR = '/var/lib/jenkins/workspace/netflix-git-ops'
     }
 
     stages {
@@ -81,16 +81,16 @@ pipeline {
 
                             # Display the current image line for debugging
                             echo "Current image line:"
-                            sh 'grep "image:" ${DEPLOY_FILE}'   # Use single quotes to avoid Groovy interpolation
+                            sh "grep 'image:' ${DEPLOY_FILE}"
 
-                            # Update image tag using sed
+                            # ✅ Use a different delimiter to avoid Groovy conflict
                             sh """
-                                sed -i 's|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|' ${DEPLOY_FILE}
+                                sed -i "s#image: ${DOCKER_REPO}/netflix:[^ ]*#image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}#" ${DEPLOY_FILE}
                             """
 
                             # Verify the change
                             echo "Updated image line:"
-                            sh 'grep "image:" ${DEPLOY_FILE}'   # Again, use single quotes
+                            sh "grep 'image:' ${DEPLOY_FILE}"
 
                             # Add a dummy comment to force commit
                             echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
