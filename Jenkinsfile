@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'srikanthk419/netflix'                  // Docker image name
-        DOCKER_REPO = 'srikanthk419'                           // Docker Hub repo
+        DOCKER_IMAGE = 'srikanthk419/netflix'                           // Docker image name
+        DOCKER_REPO = 'srikanthk419'                                    // Docker Hub repo
         MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'  // Manifest repo
-        MANIFEST_BRANCH = 'main'                               // Branch name
-        DEPLOY_FILE = 'deployment.yaml'                        // Manifest file path
-        WORKSPACE_DIR = '/var/lib/jenkins/workspace/netflix-git-ops'  // Jenkins workspace directory
+        MANIFEST_BRANCH = 'main'                                        // Branch name
+        DEPLOY_FILE = 'deployment.yaml'                                 // Kubernetes manifest file path
+        WORKSPACE_DIR = '/var/lib/jenkins/workspace/netflix-git-ops'    // Jenkins workspace directory
     }
 
     stages {
@@ -71,7 +71,7 @@ pipeline {
                             git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git
                             
                             cd CD-Netflix
-                            ls
+                            ls -la
 
                             # Validate the manifest file exists
                             if [ ! -f ${DEPLOY_FILE} ]; then
@@ -79,23 +79,23 @@ pipeline {
                                 exit 1
                             fi
 
-                            # Display the current image line for debugging
+                            # Display the current image line for debugging (Fixed the issue here)
                             echo "Current image line:"
-                            cat ${DEPLOY_FILE} | grep "image:"
+                            cat "\${DEPLOY_FILE}" | grep "image:"
 
                             # Update image tag in deployment.yaml
                             sed -i "s|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|" ${DEPLOY_FILE}
 
                             # Verify the change
                             echo "Updated image line:"
-                            cat ${DEPLOY_FILE} | grep "image:"
+                            cat "\${DEPLOY_FILE}" | grep "image:"
 
                             # Add a dummy comment to force commit
                             echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
 
                             # Commit and push changes
                             git config user.name "Srikanth-c4c"
-                            git config user.email "your-email@example.com"  // Replace with your GitHub email
+                            git config user.email "srikanth@gmail.com"    // Replace with your GitHub email
                             git add ${DEPLOY_FILE}
                             git commit -m "Update image tag to ${IMAGE_TAG}"
                             git push origin ${MANIFEST_BRANCH}
