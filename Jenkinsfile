@@ -6,7 +6,7 @@ pipeline {
         DOCKER_REPO = 'srikanthk419'
         MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'
         MANIFEST_BRANCH = 'main'
-        DEPLOY_FILE = 'deployment.yaml'
+        DEPLOY_FILE = 'manifest/deployment.yaml'  // Updated path with manifest folder
         WORKSPACE_DIR = '/var/lib/jenkins/workspace/netflix-git-ops'
     }
 
@@ -65,12 +65,12 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'srikanth-git', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
                         sh '''
                             set -ex
-                            rm -rf CD-Netflix
+                            rm -rf CD-Netflix manifest
 
                             # Clone the GitHub repo containing Kubernetes manifests
                             git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git
 
-                            cd CD-Netflix
+                            cd manifest
                             ls -la
 
                             # Validate the manifest file exists
@@ -83,7 +83,7 @@ pipeline {
                             echo "Current image line:"
                             grep 'image:' ${DEPLOY_FILE}
 
-                            # ✅ Use triple single quotes to prevent Groovy expansion issues
+                            # ✅ Update the image tag with the new one
                             sed -i "s#image: .*#image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}#" ${DEPLOY_FILE}
 
                             # Verify the change
