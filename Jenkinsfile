@@ -79,6 +79,7 @@ pipeline {
 			    pwd
          		    ls	
                             cd CD-Netflix
+			    ls
 
                             # Update image tag in deployment.yml
                             sed -i 's|image: ${DOCKER_REPO}/netflix:.*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|' ${DEPLOY_FILE}
