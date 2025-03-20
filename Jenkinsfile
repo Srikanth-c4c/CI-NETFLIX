@@ -6,7 +6,8 @@ pipeline {
         DOCKER_REPO = 'srikanthk419'                           // Docker Hub repo
         MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'  // Manifest repo
         MANIFEST_BRANCH = 'main'                               // Branch name
-        DEPLOY_FILE = 'deployment.yaml'                         // Manifest file path
+        DEPLOY_FILE = 'deployment.yaml'                        // Manifest file path
+        WORKSPACE_DIR = '/var/lib/jenkins/workspace/netflix-git-ops'  // Jenkins workspace directory
     }
 
     stages {
@@ -45,13 +46,8 @@ pipeline {
                     sh """
                         set -ex
 
-                        # Ensure CI-NETFLIX directory exists
-                       # if [ ! -d CI-NETFLIX ]; then echo "Error: CI-NETFLIX directory not found"; exit 1; fi
-
-                        # Navigate to CI-NETFLIX directory
-                        pwd
-			ls
-                        cd /var/lib/jenkins/workspace/netflix-git-ops/
+                        # Navigate to Jenkins workspace
+                        cd ${WORKSPACE_DIR}
                         ls
 
                         # Docker build
@@ -76,13 +72,28 @@ pipeline {
 
                             # Clone the GitHub repo containing Kubernetes manifests
                             git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git
-			    pwd
-         		    ls	
+                            
                             cd CD-Netflix
-			    ls
+                            ls
 
-                            # Update image tag in deployment.yml
-                            sed -i 's|image: ${DOCKER_REPO}/netflix:.*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|' ${DEPLOY_FILE}
+                            # Validate the manifest file exists
+                            if [ ! -f ${DEPLOY_FILE} ]; then
+                                echo "Error: ${DEPLOY_FILE} not found!"
+                                exit 1
+                            fi
+
+                            # Display the current image line for debugging
+                            echo "Current image line:"
+                            cat ${DEPLOY_FILE} | grep "image:"
+
+                            # Update image tag in deployment.yaml
+                            sed -i "s|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|" ${DEPLOY_FILE}
+
+                            # Check if changes were made
+                            if git diff --exit-code; then
+                                echo "No changes made. Skipping commit."
+                                exit 0
+                            fi
 
                             # Commit and push changes
                             git config user.name "Srikanth-c4c"
@@ -97,4 +108,3 @@ pipeline {
         }
     }
 }
-
