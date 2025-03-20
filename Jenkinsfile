@@ -81,16 +81,16 @@ pipeline {
 
                             # Display the current image line for debugging
                             echo "Current image line:"
-                            sh "grep 'image:' ${DEPLOY_FILE}"
+                            grep 'image:' ${DEPLOY_FILE}
 
-                            # ✅ Use a different delimiter to avoid Groovy conflict
-                            sh """
-                                sed -i "s#image: ${DOCKER_REPO}/netflix:[^ ]*#image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}#" ${DEPLOY_FILE}
-                            """
+                            # ✅ Use single quotes around `sed` to prevent Groovy expansion
+                            sh '''
+                                sed -i 's#image: \\$\\{DOCKER_REPO\\}/netflix:[^ ]*#image: srikanthk419/netflix:'"${IMAGE_TAG}"'#' ${DEPLOY_FILE}
+                            '''
 
                             # Verify the change
                             echo "Updated image line:"
-                            sh "grep 'image:' ${DEPLOY_FILE}"
+                            grep 'image:' ${DEPLOY_FILE}
 
                             # Add a dummy comment to force commit
                             echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
