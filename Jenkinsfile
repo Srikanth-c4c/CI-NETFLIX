@@ -49,7 +49,7 @@ pipeline {
                        # if [ ! -d CI-NETFLIX ]; then echo "Error: CI-NETFLIX directory not found"; exit 1; fi
 
                         # Navigate to CI-NETFLIX directory
-                        pws
+                        pwd
 			ls
                         cd CI-NETFLIX
                         ls
