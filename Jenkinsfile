@@ -79,16 +79,16 @@ pipeline {
                                 exit 1
                             fi
 
-                            # Display the current image line for debugging (Fixed the issue here)
+                            # Display the current image line for debugging
                             echo "Current image line:"
-                            cat "\${DEPLOY_FILE}" | grep "image:"
+                            grep "image:" ${DEPLOY_FILE}
 
-                            # Update image tag in deployment.yaml
-                            sed -i "s|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|" ${DEPLOY_FILE}
+                            # Escape the `$` in the Groovy script properly
+                            sed -i "s|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:\${IMAGE_TAG}|" ${DEPLOY_FILE}
 
                             # Verify the change
                             echo "Updated image line:"
-                            cat "\${DEPLOY_FILE}" | grep "image:"
+                            grep "image:" ${DEPLOY_FILE}
 
                             # Add a dummy comment to force commit
                             echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
