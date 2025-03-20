@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'srikanthk419/netflix'                           // Your Docker image name
-        DOCKER_REPO = 'srikanthk419'                           // Your Docker Hub repo
-        MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'  // Updated manifest repo
+        DOCKER_IMAGE = 'srikanthk419/netflix'                  // Docker image name
+        DOCKER_REPO = 'srikanthk419'                           // Docker Hub repo
+        MANIFEST_REPO = 'https://github.com/Srikanth-c4c/CD-Netflix.git'  // Manifest repo
         MANIFEST_BRANCH = 'main'                               // Branch name
-        DEPLOY_FILE = 'deployment.yml'                   // Path to the manifest file
+        DEPLOY_FILE = 'deployment.yml'                         // Manifest file path
     }
 
     stages {
@@ -44,12 +44,19 @@ pipeline {
                 script {
                     sh """
                         set -ex
-                        if [ ! -d client ]; then echo "Error: client directory not found"; exit 1; fi
+
+                        # Ensure CI-NETFLIX directory exists
+                        if [ ! -d CI-NETFLIX ]; then echo "Error: CI-NETFLIX directory not found"; exit 1; fi
+
+                        # Navigate to CI-NETFLIX directory
                         cd CI-NETFLIX
                         ls
-                        docker build --no-cache -t ${DOCKER_IMAGE}:${IMAGE_TAG} .
-                        docker tag ${DOCKER_IMAGE}:${IMAGE_TAG} ${DOCKER_REPO}/${DOCKER_IMAGE}:${IMAGE_TAG}
-                        docker push ${DOCKER_REPO}/${DOCKER_IMAGE}:${IMAGE_TAG}
+
+                        # Docker build
+                        docker build --no-cache -t ${DOCKER_REPO}/netflix:${IMAGE_TAG} .
+
+                        # Tag and push the image
+                        docker push ${DOCKER_REPO}/netflix:${IMAGE_TAG}
                     """
                 }
             }
@@ -61,20 +68,20 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'srikanth-git', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
                         sh """
                             set -ex
-                            
-                            # Remove existing repo if exists
-                            rm -rf .
 
-                            # Clone the Git repo containing Kubernetes manifests using credentials
+                            # Remove old manifests repo if exists
+                            rm -rf CD-Netflix
+
+                            # Clone the GitHub repo containing Kubernetes manifests
                             git clone -b ${MANIFEST_BRANCH} https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Srikanth-c4c/CD-Netflix.git
                             cd CD-Netflix
 
-                            # Update image tag in deploy.yml
-                            sed -i 's|image: ${DOCKER_REPO}/${DOCKER_IMAGE}:.*|image: ${DOCKER_REPO}/${DOCKER_IMAGE}:${IMAGE_TAG}|' ${DEPLOY_FILE}
+                            # Update image tag in deployment.yml
+                            sed -i 's|image: ${DOCKER_REPO}/netflix:.*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|' ${DEPLOY_FILE}
 
                             # Commit and push changes
                             git config user.name "Srikanth-c4c"
-                            git config user.email "your-email@example.com"
+                            git config user.email "your-email@example.com"  # Replace with your GitHub email
                             git add ${DEPLOY_FILE}
                             git commit -m "Update image tag to ${IMAGE_TAG}"
                             git push origin ${MANIFEST_BRANCH}
@@ -85,3 +92,4 @@ pipeline {
         }
     }
 }
+
