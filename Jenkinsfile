@@ -81,14 +81,16 @@ pipeline {
 
                             # Display the current image line for debugging
                             echo "Current image line:"
-                            grep "image:" ${DEPLOY_FILE}
+                            sh 'grep "image:" ${DEPLOY_FILE}'   # Use single quotes to avoid Groovy interpolation
 
-                            # Escape the `$` in the Groovy script properly
-                            sed -i "s|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:\${IMAGE_TAG}|" ${DEPLOY_FILE}
+                            # Update image tag using sed
+                            sh """
+                                sed -i 's|image: ${DOCKER_REPO}/netflix:[^ ]*|image: ${DOCKER_REPO}/netflix:${IMAGE_TAG}|' ${DEPLOY_FILE}
+                            """
 
                             # Verify the change
                             echo "Updated image line:"
-                            grep "image:" ${DEPLOY_FILE}
+                            sh 'grep "image:" ${DEPLOY_FILE}'   # Again, use single quotes
 
                             # Add a dummy comment to force commit
                             echo "# Updated at: $(date)" >> ${DEPLOY_FILE}
